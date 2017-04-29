@@ -1,0 +1,60 @@
+BUCKET_NAME=gs://${USER}_lstm_model
+JOB_NAME=yt8m_train_$(date +%Y%m%d_%H%M%S); gcloud --verbosity=debug ml-engine jobs \
+submit training $JOB_NAME \
+--package-path=youtube-8m --module-name=youtube-8m.train \
+--staging-bucket=$BUCKET_NAME --region=us-east1 \
+--config=youtube-8m/cloudml-gpu.yaml \
+-- --train_data_pattern='gs://youtube8m-ml-us-east1/1/frame_level/train/train*.tfrecord' \
+--frame_features=True --model=LstmModel --feature_names="rgb, audio" \
+--feature_sizes="1024, 128" --batch_size=128 --base_learning_rate=0.0002 \
+--train_dir=$BUCKET_NAME/LstmModel
+
+gcloud ml-engine jobs stream-logs yt8m_train_20170408_090344
+
+Evaluation:
+git clone https://github.com/google/youtube-8m.git
+BUCKET_NAME=gs://${USER}_lstm_model
+JOB_TO_EVAL=LstmModel
+JOB_NAME=yt8m_eval_$(date +%Y%m%d_%H%M%S); gcloud --verbosity=debug ml-engine jobs \
+submit training $JOB_NAME \
+--package-path=youtube-8m --module-name=youtube-8m.eval \
+--staging-bucket=$BUCKET_NAME --region=us-east1 \
+--config=youtube-8m/cloudml-gpu.yaml \
+-- --eval_data_pattern='gs://youtube8m-ml-us-east1/1/frame_level/validate/validate*.tfrecord' \
+--frame_features=True --model=LstmModel --feature_names="rgb, audio" \
+--feature_sizes="1024, 128" \
+--train_dir=$BUCKET_NAME/${JOB_TO_EVAL} --run_once=True --start_new_model
+
+Inference:
+BUCKET_NAME=gs://${USER}_lstm_model
+JOB_TO_EVAL=LstmModel
+JOB_NAME=yt8m_inference_$(date +%Y%m%d_%H%M%S); gcloud --verbosity=debug ml-engine jobs \
+submit training $JOB_NAME \
+--package-path=youtube-8m --module-name=youtube-8m.inference \
+--staging-bucket=$BUCKET_NAME --region=us-east1 \
+--config=youtube-8m/cloudml-gpu.yaml \
+-- --input_data_pattern='gs://youtube8m-ml/1/frame_level/test/test*.tfrecord' \
+--frame_features=True --feature_names="rgb, audio" --feature_sizes="1024, 128" \
+--batch_size=128 \
+--train_dir=$BUCKET_NAME/${JOB_TO_EVAL} \
+--output_file=$BUCKET_NAME/${JOB_TO_EVAL}/predictions.csv
+
+Validation Prediction:
+BUCKET_NAME=gs://${USER}_lstm_model
+JOB_TO_EVAL=LstmModel
+JOB_NAME=yt8m_inference_$(date +%Y%m%d_%H%M%S); gcloud --verbosity=debug ml-engine jobs \
+submit training $JOB_NAME \
+--package-path=youtube-8m --module-name=youtube-8m.inference \
+--staging-bucket=$BUCKET_NAME --region=us-east1 \
+--config=youtube-8m/cloudml-gpu.yaml \
+-- --input_data_pattern='gs://youtube8m-ml/1/frame_level/validate/validate*.tfrecord' \
+--frame_features=True --feature_names="rgb, audio" --feature_sizes="1024, 128" \
+--batch_size=128 \
+--train_dir=$BUCKET_NAME/${JOB_TO_EVAL} \
+--output_file=$BUCKET_NAME/${JOB_TO_EVAL}/predictions_validations.csv
+
+Predictions:
+gsutil cp $BUCKET_NAME/${JOB_TO_EVAL}/predictions.csv .
+
+
+
