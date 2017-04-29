@@ -68,7 +68,7 @@ submit training $JOB_NAME \
 --config=FracYou/cloudml-gpu.yaml \
 -- --train_data_pattern='gs://youtube8m-ml-us-east1/1/frame_level/train/train*.tfrecord' \
 --frame_features=True --model=LstmModel --feature_names="rgb, audio" \
---feature_sizes="1024, 128" --batch_size=128 --base_learning_rate=0.005 \
+--feature_sizes="1024, 128" --batch_size=128 --base_learning_rate=0.0002 \
 --train_dir=$BUCKET_NAME/LstmModel
 
 
