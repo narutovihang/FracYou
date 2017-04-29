@@ -25,7 +25,7 @@ import tensorflow.contrib.slim as slim
 from tensorflow import flags
 
 FLAGS = flags.FLAGS
-flags.DEFINE_integer("iterations", 40,
+flags.DEFINE_integer("iterations", 50,
                      "Number of frames per batch for DBoF.")
 flags.DEFINE_bool("dbof_add_batch_norm", True,
                   "Adds batch normalization to the DBoF model.")

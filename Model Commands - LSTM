@@ -60,7 +60,7 @@ gsutil cp $BUCKET_NAME/${JOB_TO_EVAL}/predictions.csv .
 ##################################################################################
 Commands for Increased number of frames:
 
-BUCKET_NAME=gs://$vihangpatil_lstm
+BUCKET_NAME=gs://vihangpatil_lstm
 JOB_NAME=yt8m_train_$(date +%Y%m%d_%H%M%S); gcloud --verbosity=debug ml-engine jobs \
 submit training $JOB_NAME \
 --package-path=FracYou --module-name=FracYou.train \
